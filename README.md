@@ -51,6 +51,7 @@ Syntax guide:
     z := add(1, 2, 3, 4);
     
   Bad code:
+  
     x := (1, 2, 3);
     
     y := 'a BC d];
