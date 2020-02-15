@@ -1,12 +1,6 @@
 # EARLgrey
 # Easily Accessible Routine Language
 
-# TO DO LIST
-# Typing from text (UNION PARSE)
-# FUNCTION DEFINITION!!!!!!!!!!
-# ----> RECURSION!!!!!
-# animation?
-
 import math, random, string
 from cmu_112_graphics import *
 from tkinter import *
@@ -753,9 +747,5 @@ MERGE = Transform("merge", lambda x: Transform(None,lambda y: functools.reduce(l
 SORT = Transform("sort", lambda x: Transform(None,lambda y: Union(*sorted(y,key=x)),[Union]),[Transform])
 MIN = Transform("min", lambda x: Transform(None,lambda y: min(y,key=x),[Union]),[Transform])
 MAX = Transform("max", lambda x: Transform(None,lambda y: max(y,key=x),[Union]),[Transform])
-
-def parseDef(y):
-    for i in range(10):
-        y = y.replace(f'A{i}',f'A[{i}]')
 
 EARLgrey(width=1000,height=800)
