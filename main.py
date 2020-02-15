@@ -343,8 +343,8 @@ class HomeScreen(Mode): # The colorful splash screen mode
         canvas.create_text(500,625,text='Enter',fill='black',font='Times 26 bold')
         canvas.create_polygon(*self.buttonCords(500,675,75,15),fill=colors[1],width=3,outline="black")
         canvas.create_text(500,675,text='Load',fill='black',font='Times 26 bold')
-        canvas.create_polygon(*self.buttonCords(500,725,75,15),fill=colors[2],width=3,outline="black")
-        canvas.create_text(500,725,text='Tutorial',fill='black',font='Times 26 bold')
+        #canvas.create_polygon(*self.buttonCords(500,725,75,15),fill=colors[2],width=3,outline="black")
+        #canvas.create_text(500,725,text='Tutorial',fill='black',font='Times 26 bold')
 
     def drawSpiral(self,canvas):
         spiralCords = [] # Cordinates used to draw a spiral
