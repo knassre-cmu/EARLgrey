@@ -7,22 +7,22 @@ from tkinter import *
 from tkinter import simpledialog
 import functools
 
-commandLines = []
-VarLibrary = {}
+commandLines = [] # List of characters in the shell
+VarLibrary = {} # Dictionary of value names and their values
 originals = {"add","sub","mul","div","pow","mod","log","sin","cos","tan","less","equal","greater",
 "abs","round","uni","chr","upper","lower","concat","size","split","branch","or","and","not",
 "link","get","slice","inside","count","subset","range","join","index","map","keep","merge",
-"sort","min","max","def"}
+"sort","min","max","def"} # Set of original builtin functions (that do NOT get cleared)
 
 def getEARLgreyFiles(): # Searches through the current directory tto find Kimchi files
     return list(filter(lambda x: x[-7:] == '.eg.txt',os.listdir(os.getcwd())))
 
-def wipeVarLibrary():
+def wipeVarLibrary(): # Eliminate all non-builtin values
     for name in list(VarLibrary.keys()):
         if name not in originals:
             del VarLibrary[name]
 
-def formatTypes(argsList):
+def formatTypes(argsList): # Format datatypes for console
     out = []
     for arg in argsList:
         if arg == Number: out.append('N')
@@ -48,7 +48,7 @@ class MainScreen(Mode): # The main interface
         self.displayLines = []
         self.consoleLog = []
 
-    def keyPressed(self,event):
+    def keyPressed(self,event): # Keyboard based cursor interactions
         global commandLines
         if event.key == 'Escape': return
         elif event.key == "Delete":
@@ -86,7 +86,7 @@ class MainScreen(Mode): # The main interface
         self.cursorIndex = max(min(self.cursorIndex,(len(commandLines))),0)
         self.adjustText()
 
-    def adjustText(self):
+    def adjustText(self): # Re-adjust the text whenever there is a keyboard interaction
         displayText = []
         modified = commandLines[:self.cursorIndex] + ['|'] + commandLines[self.cursorIndex:]
         rowLen = int(2 * self.terminalWidth / self.fontSize - 5)
@@ -103,7 +103,7 @@ class MainScreen(Mode): # The main interface
         self.canvas.pack_forget()
         self.app._canvas.pack()
 
-    def checkSyntax(self,code):
+    def checkSyntax(self,code): # Basic semicolon check
         pars = 0
         try:
             for char in code:
@@ -117,21 +117,21 @@ class MainScreen(Mode): # The main interface
             self.consoleLog.insert(0,f"SyntaxError: {e}")
             return False
 
-    def getLines(self):
+    def getLines(self): # Extract each line of code based on ; ocurrences
         return [line.strip() for line in ''.join(commandLines).split(';')]
 
-    def isNumber(self,line):
+    def isNumber(self,line): # Checks if a value (e.g. -15.112) should be turned into a Number
         if line.count('.') > 1: return False
         if line[0] == '-': return set(line[1:]) & set('0.123456789') == set(line[1:])
         return set(line) & set('0.123456789') == set(line)
 
-    def isTransform(self,line):
+    def isTransform(self,line): # Checks if a value is the name a known Transform
         for var in VarLibrary:
             if type(VarLibrary[var]) == Transform:
                 if line[:line.find('(')] == var:
                     return True
 
-    def genesisString(self,line):
+    def genesisString(self,line): # Creates a new transform from genesis syntax
         left = line.find('=>')
         if left < 1: raise SyntaxError("Must have arguments before => operator")
         if line.count('=>') > 1: raise SyntaxError("Must have exactly 1 => operator in a definition")
@@ -144,7 +144,7 @@ class MainScreen(Mode): # The main interface
         function = eval(f'lambda {args}: {post}')
         return Transform(None,function,[None]*len(args.split(',')))
 
-    def isUnion(self,line):
+    def isUnion(self,line): # Checks if a value is a Union (e.g. <1,2,3>)
         if line[0] != '<' or line[-1] != '>': return False
         if '<' in line[1:-1] or '>' in line[1:-1]: raise SyntaxError("Unions may not contain unions (yet)")
         brackets = 0
@@ -155,15 +155,14 @@ class MainScreen(Mode): # The main interface
         if brackets != 0: raise SyntaxError("Unbalanced brackets")
         return True
 
-    def unionParse(self,line):
+    def unionParse(self,line): # Properly evaluates all the elements of a union
         out = []
         for item in line[1:-1].split(','):
             elem = item.strip()
             out += self.grabInputs(elem)
-        print(Union(*out))
         return Union(*out)
 
-    def typeVersion(self,line):
+    def typeVersion(self,line): # Convert values back into f strings based on their type
         out = []
         for i in line:
             if type(i) == Number: out.append(f'Number({i.value})')
@@ -173,9 +172,9 @@ class MainScreen(Mode): # The main interface
                 Ustring = repr(i.values)
                 out.append(f'Union({Ustring[1:-1]})')
             else: out.append(i)
-        print('---->',out)
         return out
 
+    # Extract all inputs from a function call and evaluate them
     def grabInputs(self,line,functionMode=True,ignoreMisc=False):
         out = []
         if functionMode:
@@ -183,7 +182,6 @@ class MainScreen(Mode): # The main interface
             last = len(line)-line[::-1].find(')')-1
             operands = line[first:last].strip('(').strip(')').split(',')
         else: operands = [line]
-        print(operands)
         for operand in operands:
             if operand in VarLibrary: out.append(VarLibrary[operand])
             elif self.isNumber(operand): out.append(Number(float(operand)))
@@ -191,7 +189,6 @@ class MainScreen(Mode): # The main interface
             elif operand == 'TRUE': out.append(Logic(True))
             elif operand == 'FALSE': out.append(Logic(False))
             elif self.isTransform(operand): 
-                print('>>',operand)
                 inputs = self.grabInputs(operand)
                 out.append(VarLibrary[operand[:operand.find('(')]](*inputs))
             elif self.isUnion(operand): out.append(self.unionParse(operand))
@@ -199,13 +196,11 @@ class MainScreen(Mode): # The main interface
                 raise SyntaxError(f"Unrecognized operand '{operand}'")
             else:
                 out.append(operand)
-        print(out)
         if ignoreMisc: 
-            print(out)
-            print(self.typeVersion(out))
             return self.typeVersion(out)
         return out
 
+    # Execute a single line of code and process syntactical / type errors accordingly
     def execute(self,line,i):
         try:
             if ':=' not in line and '$=' not in line: 
@@ -227,7 +222,6 @@ class MainScreen(Mode): # The main interface
             elif right == "TRUE": VarLibrary[left] = Logic(True)
             elif right == "False": VarLibrary[left] = Logic(False)
             elif self.isTransform(right): 
-                print('>>',left,right)
                 inputs = self.grabInputs(right)
                 function = VarLibrary[right[:right.find('(')]]
                 VarLibrary[left] = function(*inputs)
@@ -241,6 +235,7 @@ class MainScreen(Mode): # The main interface
         except Exception as e: self.consoleLog.insert(0,f"[{i}] Error: {e}")
         return False
 
+    # Handle all mouse-based interactions (buttons)
     def mousePressed(self,event):
         global commandLines
         if event.x > self.terminalWidth:
@@ -253,7 +248,6 @@ class MainScreen(Mode): # The main interface
                         if parsed[i] == '': continue
                         success = self.execute(parsed[i],i)
                         if not success: 
-                            print("ERROR >> TERMINATION OF CODE")
                             return
             elif event.y < 60:
                 EARLgrey.newSave()
@@ -264,24 +258,29 @@ class MainScreen(Mode): # The main interface
                 self.app.setActiveMode(self.app.home)
         self.adjustText()
 
+    # Draw the terminal shell with all the text (and the cursor)
     def drawTerminal(self,canvas):
         canvas.create_rectangle(20,0,self.terminalWidth,800,fill="Black")
         for i in range(len(self.displayLines)):
             canvas.create_text(30,self.scrollY+i*self.fontSize*1.1,text=''.join(self.displayLines[i]),fill="White",font=f'Futura {self.fontSize}',anchor='nw')
 
+    # Draw the green execution button
     def drawExecution(self,canvas):
         canvas.create_rectangle(self.terminalWidth+4,0,self.width,30,width=0,fill="#66dd99")
         canvas.create_text(self.terminalWidth/2+self.width/2,16,text="• RUN •",fill="White",font="Futura 20 bold")
 
+    # Draw the red save code button
     def drawSave(self,canvas):
         canvas.create_rectangle(self.terminalWidth+4,30,self.width,60,width=0,fill="#dd6666")
         canvas.create_text(self.terminalWidth/2+self.width/2,46,text="• SAVE •",fill="White",font="Futura 20 bold")
 
+    # Draw the console of text printed every time the execution button is pressed (and the clear button)
     def drawConsole(self,canvas):
         canvas.create_rectangle(self.terminalWidth+4,60,self.width,90,width=0,fill="#6699dd")
         canvas.create_text(self.terminalWidth/2+self.width/2,75,text="• CLEAR •",fill="White",font="Futura 20 bold")
         canvas.create_text(self.terminalWidth+5,95,text='\n'.join(self.consoleLog),font="Futura 12 bold",anchor='nw')
 
+    # Draw the purple home button to exit MainScreen without losing code
     def drawHome(self,canvas):
         canvas.create_rectangle(self.terminalWidth+4,self.height,self.width,self.height-32,width=0,fill="#996699")
         canvas.create_text(self.terminalWidth/2+self.width/2,self.height-17,text="• HOME •",fill="White",font="Futura 20 bold")
@@ -492,36 +491,44 @@ class EARLgrey(ModalApp):
         except Exception as e:
             pass
 
+# Number class: effectively a Python float, but will display as an integer if whole
 class Number(object):
     def __init__(self,value):
         self.value = value
-
+    
+    # Evaluates truthiness of a Number (non-zero)
     def __bool__(self):
         return self != Number(0)
 
+    # Adds two numbers together
     def __add__(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot add {type(self)} and {type(other)}")
         return Number(self.value+other.value)
 
+    # Inverts the sign of a number
     def __neg__(self):
         return Number(0) - self
 
+    # Subtracts a number from another
     def __sub__(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot subtract {type(self)} and {type(other)}")
         return Number(self.value-other.value)
 
+    # Adds multiplies numbers together
     def __mul__(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot multiply {type(self)} and {type(other)}")
         return Number(self.value*other.value)
 
+    # Takes one number to the power of another
     def __pow__(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot exponentiate {type(self)} and {type(other)}")
         return Number(self.value**other.value)
 
+    # Divides a number by another
     def __truediv__(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot divide {type(self)} and {type(other)}")
@@ -529,6 +536,7 @@ class Number(object):
             raise ZeroDivisionError("Cannot divide {type(self)} by 0")
         return Number(self.value//other.value)
 
+    # Mods a number by another
     def __mod__(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot mod {type(self)} and {type(other)}")
@@ -536,6 +544,7 @@ class Number(object):
             raise ZeroDivisionError("Cannot divide {type(self)} by 0")
         return Number(self.value%other.value)
 
+    # Gets the log of a number base another number
     def log(self,other):
         if type(other) != Number:
             raise TypeError(f"Cannot log {type(self)} and {type(other)}")
@@ -543,48 +552,61 @@ class Number(object):
             raise ZeroDivisionError(f"Cannot log {type(self)} by {other.value}")
         return Number(math.log(self.value,other.value))
 
+    # Rounds a number
     def __round__(self,n=0):
         if n == 0: return Number(int(self.value))
         return Number(round(self.value,n))
 
+    # Takes the absolute value of a number
     def __abs__(self):
         return Number(abs(self.value))
 
+    # Checks if two numbers are equal
     def __eq__(self,other):
         return Logic(type(self) == type(other) and self.value == other.value)
 
+    # Checks if a number is less than or equal to another number
     def __le__(self,other):
         if type(other) != Number: raise TypeError(f"Cannot compare {type(self)} and {type(other)}")
         return Logic(self.value <= other.value)
 
+    # Checks if a number is less than to another number
     def __lt__(self,other):
         if type(other) != Number: raise TypeError(f"Cannot compare {type(self)} and {type(other)}")
         return Logic(self.value < other.value)
 
+    # Checks if a number is greater than to another number
     def __gt__(self,other):
         if type(other) != Number: raise TypeError(f"Cannot compare {type(self)} and {type(other)}")
         return Logic(self.value > other.value)
 
+    # Checks if a number is greater than or equal to another number
     def __ge__(self,other):
         if type(other) != Number: raise TypeError(f"Cannot compare {type(self)} and {type(other)}")
         return Logic(self.value >= other.value)
 
+    # Takes the sin of a number
     def sin(self):
         return Number(math.sin(self.value))
 
+    # Takes the cosine of a number
     def cos(self):
         return Number(math.cos(self.value))
 
+    # Takes the tangent of a number
     def tan(self):
         return Number(math.tan(self.value))
 
+    # Takes in 2 numbers and returns a random number between them
     @staticmethod
     def random(a,b):
         return (Number(random.random())*(b-a))+a
 
+    # Converts a number to a single character vocab
     def chr(self):
         return Vocab(repr(chr(int(abs(self.value)))))
 
+    # Represents a number as a string (float precision goes up to 8)
     def __repr__(self):
         if round(self) == self: return f'{round(self.value)}'
         s0 = f'%0.1f' % self.value
@@ -593,92 +615,116 @@ class Number(object):
             if s1[-1] != '0': s0 = s1
         return s0
 
+# Vocab class: effectively Python strings
 class Vocab(object):
     def __init__(self,value):
         self.value = value[1:-1]
 
+    # Checks the truthiness of a vocab (i.e. is it not empty)
     def __bool__(self):
         return self != Vocab("")
 
+    # Checks if two vocabs are equal
     def __eq__(self,other):
         return Logic(type(self) == type(other) and self.value == other.value)
 
+    # Allows for iteration through a vocab (for other library functions, not for client use)
     def __iter__(self):
         return iter(self.value)
 
+    # Indexes or slices into a vocab
     def __getitem__(self,key):
         return self.value[key]
 
+    # Converts the first character of a vocab into a number (i.e. Python ord)
     def uni(self):
         return Number(ord(self[0]))
 
+    # Calcuates the length of a vocab
     def __len__(self):
-        return len(self.value)
+        return Number(len(self.value))
 
+    # Adds two vocabs 
     def __add__(self,other):
-        if type(other) != Vocab: raise TypeError(f"Cannot compare {type(self)} and {type(other)}")
+        if type(other) != Vocab: raise TypeError(f"Cannot add {type(self)} and {type(other)}")
         return Vocab(repr(self.value+other.value))
 
+    # Represents a vocab as a Python string
     def __repr__(self):
         return repr(self.value)
 
+    # Splits a vocab into a Union of characters (so that list functions can be used)
     def split(self):
         return Union(*list(self.value))
 
+# Union class: effectively Python tuples (immutable), but restricted to 1D
 class Union(object):
     def __init__(self,*values):
         self.values = values
 
+    # Checks the truthiness of a Union (i.e. is it nonempty)
     def __bool__(self):
         return self != Union()
 
+    # Indexes or slices into a Union
     def __getitem__(self,key):
         if type(key) == slice:
             return Union(*self.values[key])
         return self.values[key]
 
+    # Checks if two unions are equal
     def __eq__(self,other):
         return Logic(type(self) == type(other) and self.values == other.values)
 
+    # Count occurences of a non-typed item in a union
     def count(self,item):
         return Number(self.values.count(item))
 
+    # Finds the index of the first occurence of a non-typed item in a union
     def index(self,item):
         for i in range(len(self)):
             if self[i] == item: return Number(i)
         return Number(-1)
 
+    # Checks if one union is a subset of another union
     def subset(self,other):
         if type(other) != Union: raise TypeError(f"Cannot check subsets of {type(other)}")
         for i in self:
             if other.count(i) < self.count(i): return Logic(False)
         return Logic(True)
 
+    # Merges two unions
     def __add__(self,other):
         if type(other) != Union: raise TypeError(f"Cannot link {type(self)} and {type(other)}")
         return Union(*(self.values+other.values))
 
+    # Allows iteration over a union (for other library functions, not for client use)
     def __iter__(self):
         return iter(self.values)
 
+    # Calculates the length of a Union
     def __len__(self):
-        return len(self.values)
+        return Number(len(self.values))
 
+    # Represents a union as a string (using < > to denote begining and end)
     def __repr__(self):
         return '<' + str(self.values)[1:-1] + '>'
 
+# Logic class: a Python boolean by a less obnoxious name
 class Logic(object):
     def __init__(self,value):
         self.value = bool(value)
 
+    # Checks the truthiness of a logic (which is itself)
     def __bool__(self):
         return self.value
 
+    # Represents a logic as a string (TRUE or FALSE)
     def __repr__(self):
         return str(self.value).upper()
 
+# Transform class: effectively a Python function with it's functional properties explored
 class Transform(object):
-
     def __init__(self,name,function,argsList,varArgs=False):
         if name != None and name in VarLibrary:
             raise NameError(f"Name {name} already found")
@@ -688,12 +734,15 @@ class Transform(object):
         self.varArgs = varArgs
         if name != None: VarLibrary[self.name] = self
     
+    # Represents a function as a lambda followed by its types (* = variable number of arguments)
     def __repr__(self):
         return chr(955) + f'({"*" if self.varArgs else ""}{formatTypes(self.argsList)})'
 
+    # Checks if two transforms are equal
     def __eq__(self,other):
         return type(other) == Transform and self.function == other.function and self.argsList == other.argsList and self.varArgs == other.varArgs
 
+    # Calls a transform with inputs (and heavy exception handling)
     def __call__(self,*operands):
         if len(operands) < len(self.argsList):
             raise TypeError(f"{self.name} requires at least {len(self.argsList)} arguments")
@@ -705,6 +754,9 @@ class Transform(object):
                 raise TypeError(f"Argument {i+1} of {self.name} must be a {self.argsList[i]} (recieved {type(operands[i])})")
             return self.function(*operands)
 
+# Below are the top-levl inigializations of all builtin functions:
+
+# Number functions: basic arithmetic
 ADD = Transform("add",lambda *x: functools.reduce(lambda y,z: y+z, x),[Number],True)
 SUB = Transform("sub",lambda *x: x[0] - functools.reduce(lambda y,z: y+z, x[1:]) if len(x) > 1 else x[0],[Number],True)
 MUL = Transform("mul",lambda *x: functools.reduce(lambda y,z: y*z, x),[Number],True)
@@ -721,18 +773,25 @@ GREATER = Transform("greater",lambda x,y: x > y, [None,None])
 ABS = Transform("abs",lambda x: abs(x), [Number])
 ROUND = Transform("round",lambda x: round(x), [Number])
 RANDOM = Transform("random",lambda x,y: Number.random(x,y), [Number,Number])
+
+# Vocab functions: basic string operations
 UNI = Transform("uni",lambda x: x.uni(),[Vocab])
 CHR = Transform("chr",lambda x: x.chr(),[Number])
 UPPER = Transform("upper",lambda x: Vocab(x.value.upper()),[Vocab])
 LOWER = Transform("lower",lambda x: Vocab(x.value.lower()),[Vocab])
 CONCAT = Transform("concat",lambda *x: functools.reduce(lambda y,z: y+z, x),[Vocab],True)
-SIZE = Transform("size",lambda x: Number(len(x)),[Vocab])
+SIZE = Transform("size",lambda x: len(x),[Vocab])
 SPLIT = Transform("split",lambda x: x.split(),[Vocab])
+
+# Logic functions: basic conditionals, plus an incomplete implementation of if-then-else sequential logic
 BRANCH = Transform("branch", lambda x, y, z: y if x else z,[None,None,None])
 OR = Transform("or",lambda *x: Logic(any(x)),[None],True)
 AND = Transform("and",lambda *x: Logic(all(x)),[None],True)
 NOT = Transform("not",lambda x: Logic(not(bool(x))),[None])
+
+# Union functions: basic list utilities plus a few interesting ones...
 LINK = Transform("link",lambda *x: functools.reduce(lambda y,z: y+z, x),[Union],True)
+LENGTH = Transform("length",lambda x: len(x), [Union],True)
 GET = Transform("get",lambda x,y: x[round(y).value], [Union,Number])
 SLICE = Transform("slice",lambda x,y,z,a: x[round(y).value:round(z).value:round(a).value], [Union,Number,Number,Number])
 INSIDE = Transform("inside",lambda x,y: Logic(x in y), [None,Union])
@@ -741,6 +800,8 @@ SUBSET = Transform("subset",lambda x,y: x.subset(y), [Union, Union])
 RANGE = Transform("range",lambda x,y,z: Union(*range(round(x).value,round(y).value,round(z).value)),[Number, Number, Number])
 JOIN = Transform("join",lambda x: ''.join([str(i) for i in x]),[Union])
 INDEX = Transform("index", lambda x, y: y.index(x), [None,Union])
+
+# Transform functions: take in a transform and return a new transform (usually to replace loops over lists)
 MAP = Transform("map", lambda x: Transform(None,lambda y: Union(*map(lambda z: x(z), y)), [Union]),[Transform])
 KEEP = Transform("keep", lambda x: Transform(None,lambda y: Union(*filter(lambda z: x(z), y)), [Union]),[Transform])
 MERGE = Transform("merge", lambda x: Transform(None,lambda y: functools.reduce(lambda z,a: x(z,a), y), [Union]),[Transform])
