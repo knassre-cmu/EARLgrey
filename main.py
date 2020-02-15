@@ -2,7 +2,7 @@
 # Easily Accessible Routine Language
 
 import math, random, string
-from cmu_112_graphics import *
+from cmu_112_graphics import * # From http://www.kosbie.net/cmu/fall-19/15-112/notes/notes-animations-part2.html
 from tkinter import *
 from tkinter import simpledialog
 import functools
