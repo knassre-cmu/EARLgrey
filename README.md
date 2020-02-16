@@ -61,6 +61,7 @@ Syntax guide:
 4. Transforms can be created using genesis notation, which includes comma-seperated inputs and points to the output using the implies operator (=>). The output must be a value that does not use any nested comma-seperated values (values can be used to get around this).
 
   Good code:
+  
     x $= u,n => link(u,<n>);
   
     y := <1,2,3,4>
