@@ -59,6 +59,7 @@ Syntax guide:
     z := add 1, 2, 3, 4;
     
 4. Transforms can be created using genesis notation, which includes comma-seperated inputs and points to the output using the implies operator (=>). The output must be a value that does not use any nested comma-seperated values (values can be used to get around this).
+
   Good code:
     x $= u,n => link(u,<n>);
   
@@ -110,3 +111,49 @@ Syntax guide:
     var<name>1 := 5;
     
     :$ye<>t" := 4
+    
+7. Builtin Function Library:
+
+  • add() takes in 1+ Numbers and returns their sum
+  • sub() takes in 1+ Numbers and returns their difference
+  • mul() takes in 1+ Numbers and returns their product
+  • div() takes in 1+ Numbers and returns their quotient
+  • pow() takes in 1+ Numbers and returns the first to the power of the second
+  • mod() takes in 2 Numbers and returns the first modulo the second
+  • log() takes in 2 Numbers and returns the log of the first base the second
+  • sin() takes in 1 Number and returns its sine
+  • cos() takes in 1 Number and returns its cosine
+  • tan() takes in 1 Number and returns its tangent
+  • abs() takes in 1 Number and returns its absolute value
+  • round() takes in 1 Number and returns its rounded vaue
+  • random() takes in 2 Numbers and returns a random Number between them
+  • less() takes in 2 [WILD] and returns if the first is less than the second
+  • equal() takes in 2 [WILD] and returns if they are equal
+  • greater() takes in 2 [WILD] and returns if the first is greater than the second
+  • uni() takes in 1 Vocab and returns the unicode Number of the first character
+  • chr() takes in Number and returns its unicode character as a Vocab
+  • upper() takes in 1 Vocab and returns a version with all the leters capitalized
+  • lower() takes in 1 Vocab and returns a version with all the characters de-capitalized
+  • concat() takes in 1+ Vocabs and concatenates them into 1 Vocab
+  • size() takes in 1 Vocab and returns its length as a Number
+  • split() takes in 1 Vocab and returns a Union of its characters
+  • join() takes in 1 Union and returns a Vocab merging its elements
+  • branch() takes in 1 Logic and 2 [WILD] and returns the first if the Logic is TRUE and the second if it is FAlSE
+  • or() takes in 1+ [WILD] and returns if any of them have truthiness
+  • and() takes in 1+ [WILD] and returns if all of them have truthiness
+  • not() takes in a Logic and returns its opposite
+  • link() takes in 2+ Unions and returns a Union merging them into one
+  • get() takes in a Union and an Number and returns that item of the Union
+  • slice() takes in a Union and 3 Numbers and returns that Union slice of the Union
+  • inside() takes in a [WILD] and a Union and returns the Logic
+  • count()takes in a [WILD] and a Union and returns the Number of times the former is in the latter
+  • index() takes in a [WILD] and a Union and returns the Number of the first time it appears in the Union
+  • subset() takes in 2 Unions and returns if the first is a subset of hte second
+  • range() takes in 3 Numbers and returns a Union of that range
+  [For each of the following Transform functions, the original input Transform is reffered to as t and the output as t']
+  • map() takes in a 1-input t and returns a t' that takes in a Union and applies t to each element
+  • keep() takes in a 1-input t and returns a t' that takes in a Union and keeps the items that cause t to return TRUE
+  • merge() takes in a 2-input t and returns a t' that takes in a Union merges all the elements using t
+  • sort() takes in a 1-input t and returns a t' that takes in a Union and sorts the elements using t
+  • max() takes in a 1-input t and returns a t' that takes in a Union and returns the element with the highest value for t
+  • min() takes in a 1-input t and returns a t' that takes in a Union and returns the element with the lowest value for t
