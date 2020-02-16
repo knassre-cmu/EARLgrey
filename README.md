@@ -186,8 +186,6 @@ Syntax guide:
   
   • range() takes in 3 Numbers and returns a Union of that range
   
-  [For each of the following Transform functions, the original input Transform is reffered to as t and the output as t']
-  
   • map() takes in a 1-input t and returns a t' that takes in a Union and applies t to each element
   
   • keep() takes in a 1-input t and returns a t' that takes in a Union and keeps the items that cause t to return TRUE
