@@ -199,3 +199,17 @@ Syntax guide:
     • max() takes in a 1-input t and returns a t' that takes in a Union and returns the element with the highest value for t
 
     • min() takes in a 1-input t and returns a t' that takes in a Union and returns the element with the lowest value for t
+    
+  Sample Code:
+    
+    x := 3; # Creates x and sets it equal to the Number 3
+    
+    y := sub(3,1); # Creates y and sets it equal to the Number 2
+    
+    z := <x, y, 5>; # Creates z and sets it equal to the Union <3, 2, 5>
+    
+    square $= n => pow(n,2); # Creates the transform Z that takes in a [wild] and takes it to hte power of 2
+    
+    mapSquare := map(square); # Creates the value mapSquare that takes in a Union and applies square to all of its elements
+    
+    z' := mapSquare(z); # Creates the value z' and sets it equal to the Union <9, 4, 25>
