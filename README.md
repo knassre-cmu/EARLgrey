@@ -202,14 +202,10 @@ Syntax guide:
     
   Sample Code:
     
-    x := 3; # Creates x and sets it equal to the Number 3
+    z := <3, 2 5>; # Creates z and sets it equal to the Union <3, 2, 5>
     
-    y := sub(3,1); # Creates y and sets it equal to the Number 2
+    square $= n => pow(n,2); # Creates the transform square that takes in a [wild] and takes it to the power of 2
     
-    z := <x, y, 5>; # Creates z and sets it equal to the Union <3, 2, 5>
+    MS := map(square); # Creates the value MS that takes in a Union and applies square to all of its elements
     
-    square $= n => pow(n,2); # Creates the transform Z that takes in a [wild] and takes it to hte power of 2
-    
-    mapSquare := map(square); # Creates the value mapSquare that takes in a Union and applies square to all of its elements
-    
-    z' := mapSquare(z); # Creates the value z' and sets it equal to the Union <9, 4, 25>
+    ZPrime := mapSquare(z); # Creates the value ZPrime and sets it equal to the Union <9, 4, 25>
