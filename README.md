@@ -112,7 +112,7 @@ Syntax guide:
     
     :$ye<>t" := 4
     
-7. Builtin Function Library:
+  7. Builtin Function Library:
 
     • add() takes in 1+ Numbers and returns their sum
 
