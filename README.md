@@ -64,7 +64,7 @@ Syntax guide:
   
     x $= u,n => link(u,<n>);
   
-    y := <1,2,3,4>
+    y := <1,2,3,4>;
     
     z := x(y,5);
     
@@ -79,21 +79,22 @@ Syntax guide:
   Good code:
   
     x $= n => mod(n,2);
+    
     y := keep(x);
     
     U := <1,2,3,4,5>;
     
-    z := y(U);       <--- This will evaluate as <1,3,5>
+    z := y(U);
     
   Bad code:
   
     x := n => mul(n,n);
     
-    y $= t => map(t) <--- This part is possibly correct but 100% unecessary
+    y $= t => map(t);
     
-    U := <1, 2, 3>
+    U := <1, 2, 3>;
     
-    z := y(x)(U)
+    z := y(x)(U);
     
 6. Value names must be created with at least 1 letter in front and with no spaces, parenthesis, triangular brackets, colons, quotes, or dollar signs.
 
